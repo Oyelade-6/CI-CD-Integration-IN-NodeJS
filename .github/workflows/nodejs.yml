@@ -1,41 +1,48 @@
+name: Advanced CI/CD Pipeline
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
 jobs:
   test:
     name: Unit Tests (${{ matrix.os }} / Node ${{ matrix.node-version }})
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest] # Cross-platform requirement
-        node-version: [18, 20]             # Multiple versions requirement
+        os: [ubuntu-latest, windows-latest] 
+        node-version: [18, 20]             
     runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci # Faster, cleaner install for CI
+        run: npm ci 
 
       - name: Lint Stage
-        run: npm run lint || echo "Linting failed but continuing..." # Linting requirement
+        run: npm run lint || echo "Linting failed but continuing..." 
 
       - name: Run Tests with Coverage
-        run: npm test -- --coverage # Coverage requirement
+        run: npm test -- --coverage 
 
-      # Deliverable Requirement: Store test reports
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.os }}-${{ matrix.node-version }}
           path: coverage/
 
-release:
+  release:
     name: Semantic Release
-    needs: test # Only runs if tests pass
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test 
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -43,12 +50,15 @@ release:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          
       - name: Install Release Tools
         run: npm install -g semantic-release @semantic-release/github @semantic-release/changelog
+        
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
