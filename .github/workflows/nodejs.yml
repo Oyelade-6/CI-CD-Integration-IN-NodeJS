@@ -28,7 +28,8 @@ jobs:
         run: npm ci 
 
       - name: Lint Stage
-        run: npm run lint || echo "Linting failed but continuing..." 
+        run: npm run lint
+        continue-on-error: true  # This ensures the pipeline keeps going even if there are lint warnings
 
       - name: Run Tests with Coverage
         run: npm test -- --coverage 
